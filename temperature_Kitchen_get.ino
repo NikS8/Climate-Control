@@ -1,11 +1,9 @@
-#include <DHT.h>        // You have to download DHT11  library
-#define DHTPIN 5                        // PIN №8 подключения датчика DTH11
+#include <DHT.h>        // You have to download DHT  library
+#define DHTPIN 5                        // PIN №5 подключения датчика DTH22
 #define DHTTYPE DHT22
 DHT dht(DHTPIN, DHTTYPE);
 int sensorDhtTempKitchen;
 int sensorDhtHumKitchen;
-
-//------------
 
 //-----------------
 int alarmKitchenPin = A0;          //сигнал открытия двери и окон в летней кухне
@@ -63,10 +61,9 @@ void setup() {
 //------------------------------------------------------------------------------------------------------
 
 void loop() {
-  //----------------------------------
-
-  sensorDhtTempKitchen = dht.readTemperature();
-  sensorDhtHumKitchen = dht.readHumidity();
+ 
+  sensorDhtTempKitchen = dht.readTemperature(); //  считываем показания температуры
+  sensorDhtHumKitchen = dht.readHumidity();     //  считываем показания влажности
 
   sensorAlarmKitchen = analogRead(alarmKitchenPin);
 
@@ -87,7 +84,6 @@ void loop() {
       }
       else
       {
-
         //      ID = 61;
         txdata.ID = ID;
         txdata.sensorDhtTKitchen = sensorDhtTempKitchen;      // температура в летней кухне
