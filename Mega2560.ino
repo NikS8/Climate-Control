@@ -1,5 +1,7 @@
 #include <iarduino_RTC.h>
-iarduino_RTC time(RTC_DS1302, 5, 6, 7); // подключаем RTC модуль на базе чипа DS1302, выводы Arduino к выводам модуля RST, CLK, DAT
+// подключаем RTC модуль на базе чипа DS1302, 
+//выводы Arduino 5, 6, 7 к выводам модуля RST, CLK, DAT
+iarduino_RTC time(RTC_DS1302, 5, 6, 7); 
 long lastWriteTime = 0;
 long lastReadTime = 0;
 long lastDataTime = 0;
@@ -20,6 +22,7 @@ int humDhtOutside;
 #include <EasyTransfer.h>
 #define DIR 2            // переключатель прием\передача на Pin2
 int ID;              // номер ардуины
+
 EasyTransfer ETinOfBoiler, ETinOfCollector, ETinOfKitchen, ETout;  //create  objects
 
 struct SEND_DATA_STRUCTURE {                  // структура, которую будем передавать
@@ -30,14 +33,14 @@ struct SEND_DATA_STRUCTURE {                  // структура, котор�
 };
 char action = "get";    //  "get"/"set" - запрос выдачи данных / команда на исполнение
 int levelPin = 0;   //  установка уровня на Pin (LOW/HIGH)
-int targetPin = 10;         //  Pin=10 управления контактером
+int targetPin = 10;         //  Pin=10 управления контактером в бойлерной через ProMini №21
 
 struct RECEIVE_DATA_2_OF_COLLECTOR {         // структура, которую будем принимать
   int ID;
-  int sensorDsHallIn;    // адрес датчика DS18B20 на трубе №1 из летней кухни
-  int sensorDsHallOut;    // адрес датчика DS18B20 на трубе №2 из летней кухни
-  int sensorDsCollectorIn;   // адрес датчика DS18B20 на входе в коллектор
-  int sensorDsCollectorOut;  // адрес датчика DS18B20 на выходе из коллектора
+  int sensorDsHallIn;    // температура от датчика DS18B20 на трубе №1 из прихожей
+  int sensorDsHallOut;    // температура от датчика DS18B20 на трубе №2 из прихожей
+  int sensorDsCollectorIn;   // температура от датчика DS18B20 на входе в коллектор
+  int sensorDsCollectorOut;  // температура от датчика DS18B20 на выходе из коллектора
 };
 
 struct RECEIVE_DATA_21_OF_BOILER {         // структура, которую будем принимать
@@ -48,18 +51,17 @@ struct RECEIVE_DATA_21_OF_BOILER {         // структура, которую
   int sensorDsTankHigh;      // температура от датчика DS18B20 на стенке бака вверху
   int sensorDsTankInside;    // температура от датчика DS18B20 внутри бака
   int sensorDsBoiler;        // температура от датчика DS18B20 на выходном патрубке котла
-  int sensorDhtTBoiler;      // температура в бойлерной
-  int sensorDhtHBoiler;      // влажность в бойлерной
+  int sensorDhtTBoiler;      // температура датчика DTH22 в бойлерной
+  int sensorDhtHBoiler;      // влажность датчика DTH22 в бойлерной
   int sensorDsTankIn;    // температура от датчика DS18B20 на трубе в бак
   int sensorDsTankOut;   // температура от датчика DS18B20 на трубе из бака
   int sensorPressTankFrom;    // температура от датчика давления в трубе от бака
-
 };
 
 struct RECEIVE_DATA_61_OF_KITCHEN {         // структура, которую будем принимать
   int ID;
-  int sensorDhtTKitchen;      // температура в летней кухне
-  int sensorDhtHKitchen;      // влажность в летней кухне
+  int sensorDhtTKitchen;      // температура датчика DTH22 в летней кухне
+  int sensorDhtHKitchen;      // влажность датчика DTH22 в летней кухне
   int sensorAlarmKitchen;     //сигнал открытия двери и окон в летней кухне
 };
 
@@ -81,15 +83,15 @@ int tempDsTankMiddle;    // температура от датчика DS18B20 �
 int tempDsTankHigh;      // температура от датчика DS18B20 на стенке бака вверху
 int tempDsTankInside;    // температура от датчика DS18B20 внутри бака
 int tempDsBoiler;        // температура от датчика DS18B20 на выходном патрубке котла
-int tempDhtBoiler;       // температура в бойлерной
-int humDhtBoiler;        // влажность в бойлерной
+int tempDhtBoiler;       // температура датчика DTH22 в бойлерной
+int humDhtBoiler;        // влажность датчика DTH22 в бойлерной
 
 int tempDsTankIn;    // температура от датчика DS18B20 на трубе в бак
 int tempDsTankOut;   // температура от датчика DS18B20 на трубе из бака
 float sensorPressTankFrom;    // давление от датчика давления в трубе от бака
 
-int tempDhtKitchen;      // температура в летней кухне
-int humDhtKitchen;      // влажность в летней кухне
+int tempDhtKitchen;      // температура датчика DTH22 в летней кухне
+int humDhtKitchen;      // влажность датчика DTH22 в летней кухне
 int sensorAlarmKitchen;     //сигнал открытия двери и окон в летней кухне
 
 //------------------------------------
@@ -106,23 +108,28 @@ EthernetServer server(3003);
 
 //-----------------
 #include <SD.h>
-#define SWITCH_TO_W5100 digitalWrite(4,HIGH); digitalWrite(53,LOW)    //  Переключение на интернет
-#define SWITCH_TO_SD digitalWrite(53,HIGH); digitalWrite(4,LOW)       //  Переключение на SD-карту
-#define ALL_OFF digitalWrite(53,HIGH); digitalWrite(4,HIGH)           //  Отключение SD-карты и интернета
+#define SWITCH_TO_W5100 digitalWrite(4,HIGH); digitalWrite(10,LOW)    //  Переключение на интернет
+#define SWITCH_TO_SD digitalWrite(10,HIGH); digitalWrite(4,LOW)       //  Переключение на SD-карту
+#define ALL_OFF digitalWrite(10,HIGH); digitalWrite(4,HIGH)    //  Отключение SD-карты и интернета
 //---------------
 File myFile;                                          // Создаем класс для работы с SD
 const int chipSelect = 4;
 char filename[] = "00000000.csv";
-const byte NUM_FIELDS = 1;                            //You can add extra fields but then you must list them on the next line. Read the tutorial at sparkfun! It will help.
-const String fieldNames[NUM_FIELDS] = {"temp"};       //This has to be the same as the field you set up when you made the data.sparkfun.com account i.e. replace "temp" with what you used.
+//You can add extra fields but then you must list them on the next line. 
+//Read the tutorial at sparkfun! It will help.
+const byte NUM_FIELDS = 1;        
+//This has to be the same as the field you set up when you made the data.sparkfun.com 
+//account i.e. replace "temp" with what you used.
+
+
+const String fieldNames[NUM_FIELDS] = {"temp"};       
 String fieldData[NUM_FIELDS];
 //-----------------
-#include <ArduinoJson.h>
+#include <ArduinoJson.h>  //  Библиотека JSON
 
 //------------
 #include <TimeLib.h>
 #include <EthernetUdp.h>
-
 //IPAddress timeServerUA(62, 149, 0, 30); // ntp.time.in.ua
 IPAddress timeServerUA(62, 149, 2, 7); // ntp3.time.in.ua
 const int timeZone = 2;     // зона Киевское время
@@ -146,7 +153,7 @@ void setup() {
   //------------------
   SWITCH_TO_SD;       //  Переключение на SD-карту
   pinMode(4, OUTPUT);
-  pinMode(53, OUTPUT);
+  pinMode(10, OUTPUT);
   Serial.print("Initializing SD card...");
   // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
   // Note that even if it's not used as the CS pin, the hardware SS pin
@@ -183,49 +190,47 @@ void setup() {
   Serial.print("My dnsServerIP: ");
   Serial.println(Ethernet.dnsServerIP());
   // give the Ethernet shield a second to initialize:
-
-  Serial.print("FREE RAM: ");
-  Serial.println(freeRam());
-
   delay(100);
-
   ALL_OFF;           //  Отключение SD-карты и интернета
-
-  //  запyск RS-485
+  
+  Serial.print("FREE RAM: ");   //  Количество свободной памяти
+  Serial.println(freeRam());
+  
+  //  запyск RS-485 через порт Serial 1
   Serial1.begin(9600); // start serial port
-  ETinOfCollector.begin(details(rxOf2), &Serial1); //  //start the library, pass in the data details and the name of the serial port
-  ETinOfBoiler.begin(details(rxOf21), &Serial1); //  //start the library, pass in the data details and the name of the serial port
-  ETinOfKitchen.begin(details(rxOf61), &Serial1); //  //start the library, pass in the data details and the name of the serial port
+  ETinOfCollector.begin(details(rxOf2), &Serial1); //  start the library, 
+  ETinOfBoiler.begin(details(rxOf21), &Serial1);   //  pass in the data details
+  ETinOfKitchen.begin(details(rxOf61), &Serial1);  //  and the name of the serial port
 
-  ETout.begin(details(txdata), &Serial1);
+  ETout.begin(details(txdata), &Serial1);     //  старт библиотеки на передачу
 
   pinMode(DIR, OUTPUT);
   delay(100);
   digitalWrite(DIR, LOW);                          // включаем прием
-
   delay(100);
-  //----------
-  dht1.begin();
+  
+  //---------- запуск датчиков DHT11 и DHT22
+  dht1.begin();   //  старт библиотеки 
   dht2.begin();
-  //------------
+  
+  //------------  запуск шилда WS5100
   SWITCH_TO_W5100;       //  Переключение на интернет
 
   Ethernet.begin(mac, ip);
   delay(3000);// Дадим время шилду на инициализацию
   Serial.println("connecting...");
-  //------------
-
-  //time1302.begin();
+  
+  //------------  Запуск синхронизации даты и времени
   delay(250);
   Serial.println("TimeNTP Example");  //  "Синхронизация с помощью NTP"
-
   Serial.println(Ethernet.localIP());
   Udp.begin(localPort);
   Serial.println("waiting for sync");  //  "ждем синхронизации"
 
   setSyncProvider(getNtpTime);
-  time.settime(second(), minute(), hour(), day(), month(), year()); // 0  сек, 51 мин, 21 час, 27, октября, 2015 года, вторник
-  // time1302.settime(second(),minute(),hour(),day(),month(),year());  // 0  сек, 51 мин, 21 час, 27, октября, 2015 года, вторник
+  time.settime(second(), minute(), hour(), day(), month(), year()); 
+  // 0  сек, 51 мин, 21 час, 27, октября, 2015 года, вторник
+  // time1302.settime(second(),minute(),hour(),day(),month(),year());  
 
   //------------
 }
@@ -357,7 +362,6 @@ void loop() {
 //			Дополнительные
 //				функции
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-
 //	Количество свободной памяти
 int freeRam () {
   extern int __heap_start, *__brkval;
@@ -366,7 +370,6 @@ int freeRam () {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /////////    Прием данных  от ардуины №2 от коллектора
 
 void receiveDataETinOfCollector() {
@@ -396,31 +399,32 @@ void receiveDataETinOfCollector() {
 
 
   Serial.println();
-  //   delay(100);                                     // небольшая задержка, иначе неуспевает
 
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////    Прием данных от ардуины №21 из бойлерной
 
 void receiveDataETinOfBoiler() {
 
   //   byte id = rxOf21.ID; // читаем байт, в нем для кого этот пакет
-  //   if (id == 01){ // и если пакет пришел нам от ардуины №1
+  //   if (id == 21){ // и если пакет пришел нам от ардуины №21
 
   sensorPhotoBoiler = rxOf21.sensorPhotoBoiler;
   tempDsTankLow = rxOf21.sensorDsTankLow;       // температура от датчика DS18B20 на стенке бака внизу
-  tempDsTankMiddle = rxOf21.sensorDsTankMiddle;    // температура от датчика DS18B20 на стенке бака посередине
-  tempDsTankHigh = rxOf21.sensorDsTankHigh;      // температура от датчика DS18B20 на стенке бака вверху
-  tempDsTankInside = rxOf21.sensorDsTankInside;    // температура от датчика DS18B20 внутри бака
+  tempDsTankMiddle = rxOf21.sensorDsTankMiddle; // температура от датчика DS18B20 на стенке бака посередине
+  tempDsTankHigh = rxOf21.sensorDsTankHigh;     // температура от датчика DS18B20 на стенке бака вверху
+  tempDsTankInside = rxOf21.sensorDsTankInside; // температура от датчика DS18B20 внутри бака
   tempDsBoiler = rxOf21.sensorDsBoiler;        // температура от датчика DS18B20 на выходном патрубке котла
   tempDhtBoiler = rxOf21.sensorDhtTBoiler;      // температура в бойлерной
-  humDhtBoiler = rxOf21.sensorDhtHBoiler;        // влажность в бойлерной
+  humDhtBoiler = rxOf21.sensorDhtHBoiler;       // влажность в бойлерной
 
   tempDsTankIn = rxOf21.sensorDsTankOut;    // температура от датчика DS18B20 на трубе в бак
   tempDsTankOut = rxOf21.sensorDsTankIn;   // температура от датчика DS18B20 на трубе из бака
   sensorPressTankFrom = rxOf21.sensorPressTankFrom;    // давление от датчика давления в трубе от бака
-  sensorPressTankFrom = ((sensorPressTankFrom - 102.3) / 167); // перевод в атм [(sensorPressTankFrom - 0,1*1023) / (1,6*1023/9,8)]
+  // перевод значений в атм [(sensorPressTankFrom - 0,1*1023) / (1,6*1023/9,8)]  
+  sensorPressTankFrom = ((sensorPressTankFrom - 102.3) / 167); 
+  
   ////////////////
 
   Serial.print(" ID = ");
@@ -453,19 +457,16 @@ void receiveDataETinOfBoiler() {
   Serial.print(humDhtBoiler);                 // и отправляем в Serial
 
   Serial.println();
-  //   delay(100);                                     // небольшая задержка, иначе неуспевает
 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 /////////    Прием данных  от ардуины №61 из новой кyхни
 
 void receiveDataETinOfKitchen() {
 
   //   byte id = rxOf61.ID; // читаем байт, в нем для кого этот пакет
-  //   if (id == 01){ // и если пакет пришел нам от ардуины №1
+  //   if (id == 61){ // и если пакет пришел нам от ардуины №61
 
   tempDhtKitchen = rxOf61.sensorDhtTKitchen;      // температура в летней кухне
   humDhtKitchen = rxOf61.sensorDhtHKitchen;      // влажность в летней кухне
@@ -483,15 +484,15 @@ void receiveDataETinOfKitchen() {
   Serial.print(" humDhtKitchen = ");
   Serial.print(humDhtKitchen);                 // и отправляем в Serial
   Serial.print(" sensorAlarmKitchen = ");
-  Serial.print(sensorAlarmKitchen);                 // и отправляем в Serial
+  Serial.print(sensorAlarmKitchen);            // и отправляем в Serial
 
   Serial.println();
-  //   delay(100);                                     // небольшая задержка, иначе неуспевает
 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Вывод информации на дисплей и влючение передачи данных по RS-485 каждой ардyине в сети по ее ID
+/// Вывод информации на дисплей 
+/// и влючение передачи данных по RS-485 каждой ардyине в сети по ее ID
 
 int MyDispPrint() {
   switch (switchX)  {
@@ -565,7 +566,6 @@ int MyDispPrint() {
 
       break;
 
-
     case 4 : // Вывод на экран значений температуры и влажности в бойлерной
 
       disp.clear();  // очистка экрана
@@ -589,7 +589,6 @@ int MyDispPrint() {
       Serial.println(txdata.ID);
 
       break;
-
 
     case 5 :  // Вывод на экран значений температуры воды на выходе из котла
 
@@ -760,8 +759,7 @@ void getFilename(char *filename) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-//----------------ПИШЕМ НА SD КАРТУ ВРЕМЯ И ДАННЫЕ---------------------------------------------------------------//
+//----------------ПИШЕМ НА SD КАРТУ ВРЕМЯ И ДАННЫЕ----------------------------//
 
 void fileWriteSD() {
   Serial.println("SD work start");
@@ -784,7 +782,7 @@ void fileWriteSD() {
     myFile.print(tempDhtInside);
     myFile.print(F(" ; humDhtInside ; "));               // записываем влажность
     myFile.print(humDhtInside);
-    myFile.print(F(" ; sensorPhotoBoiler ; "));       // записываем значение величины фотосопротивления
+    myFile.print(F(" ; sensorPhotoBoiler ; ")); // записываем значение фотосопротивления
     myFile.print(sensorPhotoBoiler);
     myFile.print(F(" ; tempDsBoiler ; "));                // записываем температуру
     myFile.print(int(tempDsBoiler));
@@ -811,11 +809,11 @@ void fileWriteSD() {
     myFile.close();
     Serial.println("SD work end.");
   }
-
 }
-//////////////////////////////////////////////////////////////////////////////
 
-//----------------ПИШЕМ НА SD КАРТУ ТОЛЬКО ДАННЫЕ---------------------------------------------------------------//
+//////////////////////////////////////////////////////////////////////////////
+//----------------ПИШЕМ НА SD КАРТУ ТОЛЬКО ДАННЫЕ---------------------------//
+
 void fileDateWriteSD() {
   Serial.println("SD work start");
   SWITCH_TO_SD;         //  Переключение на SD-карту
@@ -837,7 +835,7 @@ void fileDateWriteSD() {
     myFile.print(tempDhtInside);
     myFile.print(F(" ; humDhtInside ; "));               // записываем влажность
     myFile.print(humDhtInside);
-    myFile.print(F(" ; sensorPhotoBoiler ; "));       // записываем значение величины фотосопротивления
+    myFile.print(F(" ; sensorPhotoBoiler ; "));  // записываем значение фотосопротивления
     myFile.print(sensorPhotoBoiler);
     myFile.print(F(" ; stempDsBoiler ; "));                // записываем температуру
     myFile.print(tempDsBoiler);
@@ -864,7 +862,6 @@ void fileDateWriteSD() {
     myFile.close();
     Serial.println("SD work end.");
   }
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -897,7 +894,7 @@ JsonObject& prepareResponse(JsonBuffer& jsonBuffer) {
   JsonArray& analogValues = root.createNestedArray("analog");
 
   root["sensorPhotoBoiler"] = sensorPhotoBoiler;
-  root["sensorPressTankFrom"] = sensorPressTankFrom;    // давление от датчика давления в трубе от бака
+  root["sensorPressTankFrom"] = sensorPressTankFrom;  // давление от датчика давления в трубе от бака
 
   JsonArray& digitalValues = root.createNestedArray("digital");
 
@@ -931,6 +928,7 @@ JsonObject& prepareResponse(JsonBuffer& jsonBuffer) {
 
 /////////////////////////////////////////////////////////////////////////////////
 //       Rest
+
 void writeResponse(EthernetClient& client, JsonObject& json) {
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: application/json");
@@ -940,6 +938,7 @@ void writeResponse(EthernetClient& client, JsonObject& json) {
 
   json.prettyPrintTo(client);
 }
+
 /////////////////////////////////////////////////////////////////////////////////
 /*-------- Код для NTP ----- синхронизация даты и времени  -----*/
 
@@ -978,7 +977,7 @@ void sendNTPpacket(IPAddress &address)
   // задаем все байты в буфере на «0»:
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // инициализируем значения для создания NTP-запроса
-  packetBuffer[0] = 0b11100011;   // LI (от «leap indicator», т.е. «индикатор перехода»), версия, режим работы
+  packetBuffer[0] = 0b11100011;// LI (от «leap indicator», т.е. «индикатор перехода»), версия, режим работы
   packetBuffer[1] = 0;     // слой (или тип часов)
   packetBuffer[2] = 6;     // интервал запросов
   packetBuffer[3] = 0xEC;  // точность
