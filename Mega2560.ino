@@ -320,7 +320,6 @@ void loop() {
 
     }              //  Завершение 5 секундного периода
 
-
   }
 
   //----------------------------------
@@ -328,11 +327,7 @@ void loop() {
   client.stop();
   ALL_OFF;           //  Отключение SD-карты и интернета
 
-
-
-
-  //------------------------
-  //------------------------
+ //------------------------
 
   if (millis() - lastWriteTime > 59000) {   // every 60 secs.  Must be >15000.
 
@@ -396,7 +391,6 @@ void receiveDataETinOfCollector() {
   Serial.print(tempDsHallIn);                 // и отправляем в Serial
   Serial.print(" tempDsHallOut = ");
   Serial.print(tempDsHallOut);                 // и отправляем в Serial
-
 
   Serial.println();
 
