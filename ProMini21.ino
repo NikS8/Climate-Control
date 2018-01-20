@@ -37,8 +37,8 @@ int sensorDsTempTankIn;    // температура от датчика DS18B20
 int sensorDsTempTankOut;   // температура от датчика DS18B20 на трубе из бака
 int sensorPressTankFrom;    // давление от датчика давления в трубе от бака
 //-----------------
-char action = "get";    //  "get"/"set" - запрос выдачи данных / команда на исполнение
-int levelPin = 0;   //  установка уровня на Pin (LOW/HIGH)
+int action = 0;    //  0/1 ("get"/"set") - запрос выдачи данных / команда на исполнение
+int levelPin = 0;   //  0/1 - установка уровня на Pin (LOW/HIGH)
 //-----------------
 int photoPin = A0;          //  фоторезистор подключен 0-му аналоговому входу
 int pressPin = A1;          //  датчик давления в трубе от бака подключен 1-му аналоговому входу
@@ -71,7 +71,7 @@ struct RECEIVE_DATA_STRUCTURE {         // структура, которую б
   //put your variable definitions here for the data you want to receive
   //THIS MUST BE EXACTLY THE SAME ON THE OTHER ARDUINO
   int ID;
-  char action;
+  int action;
   int targetPin;
   int levelPin;
 };
@@ -97,7 +97,7 @@ void setup() {
   sensorsDS.begin(); // Запускаем поиск и запуск всех датчиков DS18B20 на шине
   dht.begin();
   //------------
-
+pinMode(targetPin, OUTPUT);
 }
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -132,13 +132,20 @@ void loop() {
 
     if (id == ID) { // и если пакет пришел нам
 
-      if (rxdata.action == "set") {
+      if (rxdata.action == 1) {
+        
+           if (rxdata.levelPin == 1) {
         targetPin = rxdata.targetPin;
         levelPin = rxdata.levelPin;
-
-        pinMode(targetPin, OUTPUT);
+       
         delay(50);
-        analogWrite(targetPin, levelPin);
+ //       analogWrite(targetPin, levelPin);
+              digitalWrite(targetPin, LOW);   // включаем реле (подаем питание на контактер включения тенов)
+           }
+        else
+        {
+           digitalWrite(targetPin, HIGH);    // выключаем реле
+        }
       }
       else
       {
