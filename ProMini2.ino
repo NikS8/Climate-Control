@@ -94,22 +94,24 @@ void loop() {
 
     if (id == ID) { // и если пакет пришел нам
  
-      if (rxdata.action == 1) {
-        
-           if (rxdata.levelPin == 1) {
+       if (rxdata.action == 1) {   //  и если команда управления
         targetPin = rxdata.targetPin;
         levelPin = rxdata.levelPin;
-       
+        pinMode(targetPin, OUTPUT);
+           
+        if (rxdata.levelPin == 1) {   //  то управляем реле
+
         delay(50);
  //       analogWrite(targetPin, levelPin);
-              digitalWrite(targetPin, LOW);   // включаем реле 
+          digitalWrite(targetPin, LOW);   // включаем реле 
            }
         else
         {
-           digitalWrite(targetPin, HIGH);    // выключаем реле
+            digitalWrite(targetPin, HIGH);    // выключаем реле
         }
+
       }
-      else
+      else //  иначе включаем передачу данных
       {
         //      ID = 2;  // номер этой ардуины
         txdata.ID = ID;
