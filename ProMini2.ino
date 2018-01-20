@@ -39,13 +39,13 @@ struct RECEIVE_DATA_STRUCTURE {         // структура, которую б
   //put your variable definitions here for the data you want to receive
   //THIS MUST BE EXACTLY THE SAME ON THE OTHER ARDUINO
   int ID;
-  char action;
+  int action;
   int targetPin;
   int levelPin;
 };
 
-char action;    //  "get"/"set" - запрос выдачи данных / команда на исполнение
-int levelPin;   //  установка уровня на Pin (LOW/HIGH)
+int action = 0;    //  0/1 ("get"/"set") - запрос выдачи данных / команда на исполнение
+int levelPin = 0;   //  0/1 - установка уровня на Pin (LOW/HIGH)
 int targetPin;         //  Pin управления
 
 //give a name to the group of data
@@ -93,15 +93,21 @@ void loop() {
     byte id = rxdata.ID; // читаем байт, в нем для кого этот пакет
 
     if (id == ID) { // и если пакет пришел нам
-
-      if (rxdata.action == "set") {
+ 
+      if (rxdata.action == 1) {
+        
+           if (rxdata.levelPin == 1) {
         targetPin = rxdata.targetPin;
         levelPin = rxdata.levelPin;
-
-        pinMode(targetPin, OUTPUT);
+       
         delay(50);
-        analogWrite(targetPin, levelPin);
-
+ //       analogWrite(targetPin, levelPin);
+              digitalWrite(targetPin, LOW);   // включаем реле 
+           }
+        else
+        {
+           digitalWrite(targetPin, HIGH);    // выключаем реле
+        }
       }
       else
       {
