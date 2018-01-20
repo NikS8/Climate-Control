@@ -27,12 +27,12 @@ EasyTransfer ETinOfBoiler, ETinOfCollector, ETinOfKitchen, ETout;  //create  obj
 
 struct SEND_DATA_STRUCTURE {                  // структура, которую будем передавать
   int ID;
-  char action;
+  int action;
   int targetPin;
   int levelPin;
 };
-char action = "get";    //  "get"/"set" - запрос выдачи данных / команда на исполнение
-int levelPin = 0;   //  установка уровня на Pin (LOW/HIGH)
+int action = 0;    //  0/1 ("get"/"set") - запрос выдачи данных / команда на исполнение
+int levelPin = 0;   //  0/1 - установка уровня на Pin (LOW/HIGH)
 int targetPin = 10;         //  Pin=10 управления контактером в бойлерной через ProMini №21
 
 struct RECEIVE_DATA_2_OF_COLLECTOR {         // структура, которую будем принимать
