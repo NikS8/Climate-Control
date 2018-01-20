@@ -97,7 +97,7 @@ void setup() {
   sensorsDS.begin(); // Запускаем поиск и запуск всех датчиков DS18B20 на шине
   dht.begin();
   //------------
-pinMode(targetPin, OUTPUT);
+
 }
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -131,23 +131,25 @@ void loop() {
     byte id = rxdata.ID; // читаем байт, в нем для кого этот пакет
 
     if (id == ID) { // и если пакет пришел нам
-
-      if (rxdata.action == 1) {
-        
-           if (rxdata.levelPin == 1) {
+    
+      if (rxdata.action == 1) {   //  и если команда управления
         targetPin = rxdata.targetPin;
         levelPin = rxdata.levelPin;
-       
+        pinMode(targetPin, OUTPUT);
+           
+        if (rxdata.levelPin == 1) {   //  то управляем реле
+
         delay(50);
  //       analogWrite(targetPin, levelPin);
-              digitalWrite(targetPin, LOW);   // включаем реле (подаем питание на контактер включения тенов)
+          digitalWrite(targetPin, LOW);   // включаем реле 
            }
         else
         {
-           digitalWrite(targetPin, HIGH);    // выключаем реле
+            digitalWrite(targetPin, HIGH);    // выключаем реле
         }
+
       }
-      else
+      else //  иначе включаем передачу данных
       {
         //      ID = 21;
         txdata.ID = ID;
